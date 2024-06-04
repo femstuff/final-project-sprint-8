@@ -74,7 +74,7 @@ func TestSetAddress(t *testing.T) {
 
 	res, err := store.Get(id)
 	require.NoError(t, err)
-	require.Equal(t, newAddress, res)
+	require.Equal(t, newAddress, res.Address)
 }
 
 // TestSetStatus проверяет обновление статуса
@@ -98,12 +98,11 @@ func TestSetStatus(t *testing.T) {
 
 	res, err := store.Get(id)
 	require.NoError(t, err)
-	require.Equal(t, newStatus, res)
+	require.Equal(t, newStatus, res.Status)
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
 func TestGetByClient(t *testing.T) {
-	// prepare
 	db, err := sql.Open("sqlite", "tracker.db") // настройте подключение к БД
 	if err != nil {
 		require.NoError(t, err, "could not open database")
@@ -111,7 +110,6 @@ func TestGetByClient(t *testing.T) {
 	defer db.Close()
 
 	store := NewParcelStore(db)
-	parcel := getTestParcel()
 
 	parcels := []Parcel{
 		getTestParcel(),
@@ -128,7 +126,7 @@ func TestGetByClient(t *testing.T) {
 
 	// add
 	for i := 0; i < len(parcels); i++ {
-		id, err := store.Add(parcel) // добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
+		id, err := store.Add(parcels[i])
 		require.NoError(t, err)
 		require.NotEmpty(t, id)
 		// обновляем идентификатор добавленной у посылки
@@ -140,7 +138,7 @@ func TestGetByClient(t *testing.T) {
 
 	storedParcels, err := store.GetByClient(client)
 	require.NoError(t, err)
-	require.Equal(t, parcels, storedParcels)
+	require.Len(t, storedParcels, len(parcels))
 
 	// check
 	for _, parcel := range storedParcels {
@@ -148,6 +146,6 @@ func TestGetByClient(t *testing.T) {
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
 		Parcels := parcelMap[parcel.Number]
-		require.Equal(t, parcel, Parcels)
+		require.Equal(t, Parcels, parcel)
 	}
 }
